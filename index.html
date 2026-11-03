@@ -1,0 +1,457 @@
+<title>Grace Academy</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Young+Serif&display=swap">
+<style>
+/* Layout: one column portal, tabbed by role (member / admin); course player splits into lesson list + lesson body on wide screens */
+:root{
+  --bg:#EEF1F5; --surface:#FFFFFF; --ink:#17202E; --muted:#5B6678; --line:#D5DBE4;
+  --primary:#1E4A72; --primary-ink:#FFFFFF; --primary-soft:#E1EAF3;
+  --gold:#9A6F17; --gold-soft:#F3E8CC;
+  --good:#2F7D4F; --good-soft:#DDF0E4; --warn:#A85A08; --warn-soft:#F7E6D2;
+  --display:'Young Serif',Georgia,'Times New Roman',serif;
+  --body:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1620; --surface:#172130; --ink:#E8EDF4; --muted:#9AA6B8; --line:#2A3648;
+    --primary:#8DB9E6; --primary-ink:#0F1620; --primary-soft:#1F3047;
+    --gold:#DDAE4E; --gold-soft:#3A2F16;
+    --good:#5CC089; --good-soft:#173324; --warn:#E59A4A; --warn-soft:#3A2814;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1620; --surface:#172130; --ink:#E8EDF4; --muted:#9AA6B8; --line:#2A3648;
+  --primary:#8DB9E6; --primary-ink:#0F1620; --primary-soft:#1F3047;
+  --gold:#DDAE4E; --gold-soft:#3A2F16;
+  --good:#5CC089; --good-soft:#173324; --warn:#E59A4A; --warn-soft:#3A2814;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 56px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:20px;min-width:0}
+h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance;line-height:1.2}
+h1{font-size:1.9rem} h2{font-size:1.35rem} h3{font-size:1.1rem}
+p{margin:0}
+a{color:var(--primary)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.eyebrow{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.mark{width:38px;height:38px;border-radius:8px;background:var(--primary);position:relative;flex:none}
+.mark::before,.mark::after{content:"";position:absolute;background:var(--primary-ink);border-radius:1px}
+.mark::before{left:17px;top:8px;width:4px;height:22px}
+.mark::after{left:10px;top:14px;width:18px;height:4px}
+.brand b{font-family:var(--display);font-weight:400;font-size:1.25rem;display:block;line-height:1.15}
+.brand span{font-size:.78rem;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:3px;gap:2px}
+.seg a{padding:6px 14px;border-radius:6px;text-decoration:none;color:var(--muted);font-weight:600;font-size:.88rem}
+.seg a[aria-current="true"]{background:var(--primary);color:var(--primary-ink)}
+.proto{font-size:.8rem;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:8px 12px}
+
+/* nav */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs a{padding:10px 14px;text-decoration:none;color:var(--muted);font-weight:600;font-size:.92rem;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--primary)}
+
+/* primitives */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr))}
+.stats{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr))}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.stat b{display:block;font-family:var(--display);font-weight:400;font-size:1.8rem;line-height:1.1}
+.stat span{font-size:.82rem;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-ink);padding:9px 16px;border-radius:6px;font-weight:600;cursor:pointer;text-decoration:none;font-size:.92rem}
+.btn.ghost{background:transparent;color:var(--primary)}
+.btn.small{padding:5px 11px;font-size:.82rem}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.bar{height:7px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--primary);border-radius:4px}
+.bar.done i{background:var(--good)}
+.pill{display:inline-block;font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--primary-soft);color:var(--primary)}
+.pill.good{background:var(--good-soft);color:var(--good)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.gold{background:var(--gold-soft);color:var(--gold)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.row.between{justify-content:space-between}
+.stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+.section-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+
+/* course cards */
+.course{display:flex;flex-direction:column;gap:10px}
+.course h3{margin-top:2px}
+.course .meta{font-size:.82rem;color:var(--muted)}
+.course .foot{margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-top:6px}
+
+/* continue banner */
+.resume{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;background:var(--primary);color:var(--primary-ink);border-radius:10px;padding:20px}
+.resume .bar{background:rgba(255,255,255,.25);width:min(100%,320px)}
+.resume .bar i{background:var(--primary-ink)}
+.resume .btn{background:var(--primary-ink);color:var(--primary);border-color:var(--primary-ink)}
+.resume .eyebrow{color:inherit;opacity:.8}
+
+/* player */
+.player{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:820px){.player{grid-template-columns:300px minmax(0,1fr);align-items:start}}
+.lessons{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.lessons button{width:100%;text-align:left;display:flex;gap:10px;align-items:flex-start;padding:10px 6px;background:none;border:0;border-bottom:1px solid var(--line);cursor:pointer;border-radius:0}
+.lessons li:last-child button{border-bottom:0}
+.lessons button[aria-current="true"]{background:var(--primary-soft)}
+.lessons button[disabled]{opacity:.5;cursor:not-allowed}
+.tick{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:none;margin-top:1px;display:grid;place-items:center;font-size:.7rem;font-weight:700}
+.tick.on{background:var(--good);border-color:var(--good);color:var(--surface)}
+.lessons small{display:block;color:var(--muted);font-size:.78rem}
+.media{aspect-ratio:16/9;max-width:100%;border-radius:8px;background:var(--primary-soft);border:1px dashed var(--primary);display:grid;place-items:center;text-align:center;padding:12px;color:var(--muted);font-size:.85rem}
+.media .play{width:54px;height:54px;border-radius:50%;background:var(--primary);display:grid;place-items:center;margin:0 auto 8px}
+.media .play::after{content:"";border-left:16px solid var(--primary-ink);border-top:10px solid transparent;border-bottom:10px solid transparent;margin-left:4px}
+.lesson-body{max-width:65ch}
+
+/* quiz */
+.q{border:1px solid var(--line);border-radius:8px;padding:14px;margin:0;min-width:0}
+.q legend{font-weight:600;padding:0 6px}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:7px 4px;cursor:pointer}
+.opt input{margin-top:4px;accent-color:var(--primary)}
+.result{border-radius:8px;padding:14px 16px}
+.result.pass{background:var(--good-soft);color:var(--good)}
+.result.fail{background:var(--warn-soft);color:var(--warn)}
+
+/* certificate */
+.cert{background:var(--surface);border:1px solid var(--gold);outline:1px solid var(--gold);outline-offset:-9px;border-radius:4px;padding:44px 24px;text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center}
+.cert h2{font-size:clamp(1.5rem,5vw,2.3rem);color:var(--gold)}
+.cert .who{font-family:var(--display);font-size:clamp(1.4rem,5vw,2rem);border-bottom:1px solid var(--line);padding:2px 24px;max-width:100%;overflow-wrap:anywhere}
+.cert .course-name{font-weight:600;font-size:1.1rem;overflow-wrap:anywhere}
+
+/* tables */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);font-size:.9rem;vertical-align:middle}
+th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:0}
+td .bar{min-width:90px}
+
+/* forms */
+.form{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field.wide{grid-column:1/-1}
+.field label{font-size:.82rem;font-weight:600}
+.field input,.field select,.field textarea{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px 11px;width:100%}
+.search{max-width:320px}
+.activity{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.activity li{padding:10px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;font-size:.9rem}
+.activity li:last-child{border-bottom:0}
+.activity time{color:var(--muted);font-size:.8rem;white-space:nowrap}
+.cols{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;font-weight:600;font-size:.9rem;z-index:20;max-width:calc(100vw - 32px)}
+@media (prefers-reduced-motion:no-preference){.toast{animation:pop .2s ease-out}@keyframes pop{from{opacity:0;transform:translate(-50%,8px)}}}
+</style>
+
+<div class="wrap" id="app"></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function(){
+var CHURCH='Grace Fellowship'; // placeholder church name
+var MEMBER='Sample Member';
+
+var courses=[
+ {id:'c1',title:"New Believers' Foundation",cat:'Discipleship',level:'Beginner',pub:true,enrolled:31,completed:14,
+  desc:'The first steps of faith: salvation, baptism, prayer, the Bible and belonging to a church family.',
+  lessons:[
+   {t:'Assurance of salvation',type:'video',m:12,b:'Salvation is a gift received by grace through faith. In this lesson we look at what Scripture says about being saved and how to live with confidence in God’s promise.'},
+   {t:'Water baptism',type:'video',m:10,b:'Baptism is a public declaration of a private faith. We cover what it means, who should be baptised and how to prepare for the baptism service.'},
+   {t:'Learning to pray',type:'audio',m:15,b:'Prayer is talking and listening to God. This audio teaching gives a simple pattern for daily prayer and answers common questions about unanswered prayer.'},
+   {t:'How to read the Bible',type:'reading',m:8,b:'Start with the Gospel of John, read a short passage each day, and ask three questions: what does it say, what does it mean, and how do I apply it?'},
+   {t:'Finding your place in church',type:'reading',m:6,b:'Every believer has a part to play. Learn about the church departments, how small groups work, and how to serve in your first season.'}],
+  quiz:[
+   {q:'Salvation is received by:',o:['Good works','Grace through faith','Church membership','Age and experience'],a:1},
+   {q:'Water baptism is best described as:',o:['A requirement to earn salvation','A public declaration of faith','Only for church leaders','A yearly tradition'],a:1},
+   {q:'Prayer is mainly:',o:['Reciting fixed words','Talking and listening to God','Something for pastors only','Only for Sundays'],a:1},
+   {q:'Which book is a good starting place for a new believer?',o:['Leviticus','Revelation','John','Obadiah'],a:2}]},
+ {id:'c2',title:'The Gospel of John',cat:'Bible Study',level:'All levels',pub:true,enrolled:22,completed:6,
+  desc:'A guided walk through John’s account of who Jesus is, with a short reflection after every lesson.',
+  lessons:[
+   {t:'The Word became flesh',type:'video',m:14,b:'John 1 opens with the identity of Jesus. We trace the themes of light, life and the Word through the first chapter.'},
+   {t:'Signs and wonders',type:'video',m:16,b:'John records seven signs. This lesson looks at the first three and what each reveals about Jesus.'},
+   {t:'I am statements',type:'audio',m:18,b:'Bread of life, light of the world, the good shepherd. We study the seven “I am” statements and what they mean for daily life.'},
+   {t:'The cross and the empty tomb',type:'reading',m:10,b:'We close with the last chapters of John and the invitation to believe and have life in His name.'}],
+  quiz:[
+   {q:'John 1 calls Jesus:',o:['The Word','The Judge only','A prophet only','The Teacher only'],a:0},
+   {q:'How many signs does John record in the first half of his Gospel?',o:['Three','Five','Seven','Twelve'],a:2},
+   {q:'Which is one of the “I am” statements?',o:['I am the vine','I am the mountain','I am the river','I am the temple'],a:0}]},
+ {id:'c3',title:"Workers' Training: Ushering and Protocol",cat:'Workers',level:'Required for new workers',pub:true,enrolled:18,completed:11,
+  desc:'Service, hospitality and order. For ushers, protocol officers and welcome team members.',
+  lessons:[
+   {t:'The heart of a church worker',type:'video',m:9,b:'Serving is ministry. We set the foundation of character, humility and faithfulness before duties.'},
+   {t:'Welcoming guests',type:'video',m:12,b:'How to greet, seat and follow up with first-time visitors, including how to record their details respectfully.'},
+   {t:'Order in the service',type:'reading',m:7,b:'Seating, offering procedure, handling latecomers and managing movement during ministration.'},
+   {t:'Safety and emergencies',type:'reading',m:8,b:'Exit routes, first aid contacts, lost child procedure and who to call when something goes wrong.'}],
+  quiz:[
+   {q:'The first quality of a church worker is:',o:['Skill','A servant’s heart','Seniority','Popularity'],a:1},
+   {q:'When a first-time visitor arrives you should:',o:['Ignore them','Greet, seat and record their details','Ask them to leave early','Send them to the front'],a:1},
+   {q:'If a child is reported lost you should:',o:['Wait until service ends','Follow the lost child procedure and alert the team','Search alone','Make an announcement only'],a:1}]},
+ {id:'c4',title:'Marriage Preparation Class',cat:'Family',level:'Engaged couples',pub:true,enrolled:12,completed:3,
+  desc:'Communication, finances, family expectations and building a Christ-centred home before the wedding.',
+  lessons:[
+   {t:'Covenant, not contract',type:'video',m:13,b:'What the Bible teaches about marriage as a covenant and what it asks of both partners.'},
+   {t:'Communication and conflict',type:'video',m:15,b:'Practical habits for listening, disagreeing well and forgiving quickly.'},
+   {t:'Money and family',type:'reading',m:9,b:'Budgeting together, family obligations and how to set healthy boundaries with in-laws.'},
+   {t:'Planning the wedding and the marriage',type:'reading',m:7,b:'Keep the focus on the marriage, not just the ceremony. A checklist of conversations to have before the big day.'}],
+  quiz:[
+   {q:'Biblical marriage is best described as:',o:['A contract','A covenant','A trial period','A business'],a:1},
+   {q:'A healthy way to handle disagreement is to:',o:['Avoid it','Listen first and forgive quickly','Win the argument','Involve everyone'],a:1},
+   {q:'Before the wedding couples should agree on:',o:['Only the guest list','Money, family and expectations','Nothing','Only the venue'],a:1}]},
+ {id:'c5',title:'Prayer and Fasting',cat:'Discipleship',level:'All levels',pub:false,enrolled:0,completed:0,
+  desc:'A three-part course on building a lasting habit of prayer and fasting.',
+  lessons:[
+   {t:'Why we fast',type:'video',m:11,b:'Draft content.'},
+   {t:'How to fast wisely',type:'reading',m:8,b:'Draft content.'},
+   {t:'Breaking a fast and staying consistent',type:'audio',m:10,b:'Draft content.'}],
+  quiz:[{q:'Fasting is mainly about:',o:['Impressing others','Drawing near to God','Weight loss','Tradition'],a:1}]}
+];
+
+var prog={
+ c1:{done:[0,1,2],passed:false,score:null},
+ c2:{done:[0],passed:false,score:null}
+};
+
+var members=[
+ {n:'Adaeze Nwosu',g:'Choir',c:3,p:82,last:'Today'},
+ {n:'Tunde Bakare',g:'Ushers',c:2,p:100,last:'Yesterday'},
+ {n:'Ifeoma Eze',g:'Women’s Fellowship',c:2,p:45,last:'2 days ago'},
+ {n:'Chukwuemeka Obi',g:'Men’s Fellowship',c:1,p:20,last:'5 days ago'},
+ {n:'Blessing Okoro',g:'Youth',c:4,p:68,last:'Today'},
+ {n:'Samuel Adeyemi',g:'Ushers',c:2,p:90,last:'Yesterday'},
+ {n:'Grace Ikpe',g:'Youth',c:1,p:35,last:'3 days ago'},
+ {n:'Emmanuel Yusuf',g:'Men’s Fellowship',c:2,p:12,last:'2 weeks ago'},
+ {n:'Ngozi Umeh',g:'Women’s Fellowship',c:3,p:76,last:'Today'},
+ {n:'Daniel Okafor',g:'Choir',c:1,p:55,last:'4 days ago'}
+];
+
+var S={tab:'home',cid:null,li:0,quiz:false,cert:false,result:null,q:'',name:MEMBER};
+var app=document.getElementById('app');
+var TABS=['home','courses','admin-overview','admin-courses','admin-members'];
+
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function byId(id){return courses.filter(function(c){return c.id===id})[0]}
+function mins(c){return c.lessons.reduce(function(a,l){return a+l.m},0)}
+function pct(c){var p=prog[c.id];return p?Math.round(p.done.length/c.lessons.length*100):0}
+function status(c){var p=prog[c.id];if(!p)return 'new';if(p.passed)return 'complete';if(p.done.length===c.lessons.length)return 'quiz';return p.done.length?'progress':'started'}
+function bar(v,done){return '<div class="bar'+(done?' done':'')+'" role="progressbar" aria-valuenow="'+v+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+v+'%"></i></div>'}
+function typeLabel(t){return {video:'Video',audio:'Audio',reading:'Reading'}[t]}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(function(){t.hidden=true},2400)}
+
+function header(){
+  var admin=S.tab.indexOf('admin')===0;
+  var tabs=admin?[['admin-overview','Overview'],['admin-courses','Courses'],['admin-members','Members']]:[['home','My learning'],['courses','All courses']];
+  return '<header class="top"><div class="brand"><div class="mark" aria-hidden="true"></div><div><b>'+esc(CHURCH)+' Academy</b><span>Church learning portal</span></div></div>'
+   +'<nav class="seg" aria-label="Switch view"><a href="#home" '+(!admin?'aria-current="true"':'')+'>Member</a><a href="#admin-overview" '+(admin?'aria-current="true"':'')+'>Admin</a></nav></header>'
+   +'<p class="proto">Prototype with example data. Church name, courses, people and quiz questions are placeholders you can change.</p>'
+   +'<nav class="tabs" aria-label="Sections">'+tabs.map(function(t){return '<a href="#'+t[0]+'" '+(S.tab===t[0]&&!S.cid?'aria-current="page"':'')+'>'+t[1]+'</a>'}).join('')+'</nav>';
+}
+
+function courseCard(c,admin){
+  var st=status(c),p=pct(c);
+  var foot;
+  if(st==='new')foot='<button class="btn" data-a="open" data-id="'+c.id+'">Enroll and start</button>';
+  else foot=bar(p,st==='complete')+'<div class="row between"><span class="muted num">'+p+'% complete</span><button class="btn ghost small" data-a="open" data-id="'+c.id+'">'+(st==='complete'?'Review':'Continue')+'</button></div>';
+  return '<article class="card course"><div class="row between"><span class="eyebrow">'+esc(c.cat)+'</span>'+(st==='complete'?'<span class="pill good">Completed</span>':'')+'</div>'
+   +'<h3>'+esc(c.title)+'</h3><p class="muted">'+esc(c.desc)+'</p>'
+   +'<p class="meta num">'+c.lessons.length+' lessons · '+mins(c)+' min · '+esc(c.level)+'</p><div class="foot">'+foot+'</div></article>';
+}
+
+function viewHome(){
+  var mine=courses.filter(function(c){return prog[c.id]});
+  var lessonsDone=mine.reduce(function(a,c){return a+prog[c.id].done.length},0);
+  var certs=mine.filter(function(c){return prog[c.id].passed}).length;
+  var cur=mine.filter(function(c){return status(c)!=='complete'})[0];
+  var html='<section class="stack"><h1>Welcome back, '+esc(S.name.split(' ')[0])+'</h1>';
+  if(cur){
+    var next=prog[cur.id].done.length<cur.lessons.length?'Next: '+cur.lessons[firstOpen(cur)].t:'Next: final quiz';
+    html+='<div class="resume"><div class="stack" style="gap:8px;flex:1;min-width:200px"><span class="eyebrow">Continue where you stopped</span><h2>'+esc(cur.title)+'</h2><p>'+esc(next)+'</p>'+bar(pct(cur))+'</div><button class="btn" data-a="open" data-id="'+cur.id+'">Resume</button></div>';
+  }
+  html+='<div class="stats"><div class="stat"><b class="num">'+mine.length+'</b><span>Courses enrolled</span></div><div class="stat"><b class="num">'+lessonsDone+'</b><span>Lessons completed</span></div><div class="stat"><b class="num">'+certs+'</b><span>Certificates earned</span></div></div></section>';
+  html+='<section class="stack"><div class="section-head"><h2>My courses</h2><a href="#courses">Browse all courses</a></div><div class="grid">'+mine.map(function(c){return courseCard(c)}).join('')+'</div></section>';
+  html+='<section class="card stack"><span class="eyebrow">This week</span><h3>Foundation class, Sunday 9:00 AM</h3><p class="muted">Fellowship Hall. Bring your notes from lessons 1 to 3. (Example event)</p></section>';
+  return html;
+}
+function firstOpen(c){var d=prog[c.id].done;for(var i=0;i<c.lessons.length;i++){if(d.indexOf(i)<0)return i}return 0}
+
+function viewCourses(){
+  var list=courses.filter(function(c){return c.pub});
+  return '<section class="stack"><h1>All courses</h1><p class="muted">Pick a course to enroll. Lessons are self-paced and each course ends with a short quiz.</p><div class="grid">'+list.map(function(c){return courseCard(c)}).join('')+'</div></section>';
+}
+
+function viewPlayer(){
+  var c=byId(S.cid),p=prog[c.id],all=p.done.length===c.lessons.length;
+  var html='<button class="btn ghost small" data-a="back" style="align-self:flex-start">← Back to courses</button>';
+  html+='<section class="stack"><span class="eyebrow">'+esc(c.cat)+'</span><h1>'+esc(c.title)+'</h1>'+bar(pct(c),p.passed)+'<p class="muted num">'+p.done.length+' of '+c.lessons.length+' lessons complete</p></section>';
+  var list='<ul class="lessons" aria-label="Lessons">'+c.lessons.map(function(l,i){
+    var on=p.done.indexOf(i)>=0;
+    return '<li><button data-a="lesson" data-i="'+i+'" '+((!S.quiz&&!S.cert&&S.li===i)?'aria-current="true"':'')+'><span class="tick'+(on?' on':'')+'">'+(on?'✓':'')+'</span><span>'+esc(l.t)+'<small>'+typeLabel(l.type)+' · '+l.m+' min</small></span></button></li>';
+  }).join('')
+  +'<li><button data-a="quiz" '+(S.quiz&&!S.cert?'aria-current="true"':'')+' '+(all?'':'disabled')+'><span class="tick'+(p.passed?' on':'')+'">'+(p.passed?'✓':'')+'</span><span>Final quiz<small>'+(all?c.quiz.length+' questions · pass mark 70%':'Finish all lessons to unlock')+'</small></span></button></li>'
+  +'<li><button data-a="cert" '+(S.cert?'aria-current="true"':'')+' '+(p.passed?'':'disabled')+'><span class="tick"></span><span>Certificate<small>'+(p.passed?'Ready to view':'Unlocks after you pass')+'</small></span></button></li></ul>';
+  var main;
+  if(S.cert)main=viewCert(c);
+  else if(S.quiz)main=viewQuiz(c);
+  else{
+    var l=c.lessons[S.li],done=p.done.indexOf(S.li)>=0;
+    var media=l.type==='reading'?'<div class="media"><div>Reading notes (PDF) will appear here.<br>Upload your own notes in the full version.</div></div>'
+      :'<div class="media"><div><div class="play" aria-hidden="true"></div>'+typeLabel(l.type)+' lesson placeholder. Pastors upload the real '+l.type+' here.</div></div>';
+    main='<div class="card stack"><div class="row"><span class="pill">'+typeLabel(l.type)+'</span><span class="muted num">'+l.m+' min</span>'+(done?'<span class="pill good">Completed</span>':'')+'</div><h2>'+esc(l.t)+'</h2>'+media+'<p class="lesson-body">'+esc(l.b)+'</p>'
+      +'<div class="row"><button class="btn" data-a="complete">'+(done?'Next':(S.li===c.lessons.length-1?'Mark complete':'Mark complete and continue'))+'</button></div></div>';
+  }
+  html+='<div class="player"><div class="card" style="padding:8px 12px">'+list+'</div><div class="stack">'+main+'</div></div>';
+  return html;
+}
+
+function viewQuiz(c){
+  var p=prog[c.id],r=S.result;
+  var html='<div class="card stack"><h2>Final quiz</h2><p class="muted">Answer every question. You need 70% to pass and can retake it any time.</p><form id="quizForm" class="stack">';
+  c.quiz.forEach(function(q,i){
+    html+='<fieldset class="q"><legend>'+(i+1)+'. '+esc(q.q)+'</legend>'+q.o.map(function(o,j){
+      var id='q'+i+'o'+j;return '<label class="opt" for="'+id+'"><input type="radio" id="'+id+'" name="q'+i+'" value="'+j+'"> <span>'+esc(o)+'</span></label>';
+    }).join('')+'</fieldset>';
+  });
+  html+='<div class="row"><button class="btn" type="submit">Submit answers</button></div></form>';
+  if(r){
+    html+='<div class="result '+(r.pass?'pass':'fail')+'"><b class="num">You scored '+r.score+'% ('+r.right+' of '+c.quiz.length+').</b> '+(r.pass?'You passed. Your certificate is ready.':'Not quite yet. Review the lessons and try again.')+'</div>';
+    if(r.pass)html+='<div class="row"><button class="btn" data-a="cert">View certificate</button></div>';
+  }
+  return html+'</div>';
+}
+
+function viewCert(c){
+  var d=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  return '<div class="card stack"><div class="field" style="max-width:360px"><label for="certName">Name on certificate</label><input id="certName" type="text" value="'+esc(S.name)+'" maxlength="60"></div></div>'
+   +'<div class="cert"><span class="eyebrow">'+esc(CHURCH)+' Academy</span><h2>Certificate of Completion</h2><p class="muted">This certifies that</p><div class="who" id="certWho">'+esc(S.name)+'</div><p class="muted">has completed the course</p><p class="course-name">'+esc(c.title)+'</p><p class="muted num">'+d+'</p></div>'
+   +'<p class="muted">Download and print options come in the full version.</p>';
+}
+
+/* ADMIN */
+function viewAdminOverview(){
+  var total=members.length*5;
+  var active=members.filter(function(m){return /Today|Yesterday|2 days|3 days|4 days/.test(m.last)}).length;
+  var comp=courses.reduce(function(a,c){return a+c.completed},0);
+  var avg=Math.round(members.reduce(function(a,m){return a+m.p},0)/members.length);
+  var pubs=courses.filter(function(c){return c.pub});
+  return '<section class="stack"><h1>Overview</h1><div class="stats">'
+   +'<div class="stat"><b class="num">'+total+'</b><span>Registered members</span></div>'
+   +'<div class="stat"><b class="num">'+(active*4)+'</b><span>Active this week</span></div>'
+   +'<div class="stat"><b class="num">'+comp+'</b><span>Courses completed</span></div>'
+   +'<div class="stat"><b class="num">'+avg+'%</b><span>Average progress</span></div></div></section>'
+   +'<div class="cols"><section class="card stack"><h3>Completion by course</h3>'+pubs.map(function(c){
+      var v=c.enrolled?Math.round(c.completed/c.enrolled*100):0;
+      return '<div class="stack" style="gap:5px"><div class="row between"><span>'+esc(c.title)+'</span><span class="muted num">'+c.completed+' of '+c.enrolled+'</span></div>'+bar(v)+'</div>';
+    }).join('')+'</section>'
+   +'<section class="card stack"><h3>Recent activity</h3><ul class="activity">'
+    +'<li><span>Adaeze Nwosu finished <b>Gospel of John</b></span><time>Today</time></li>'
+    +'<li><span>Tunde Bakare earned a certificate in <b>Workers’ Training</b></span><time>Yesterday</time></li>'
+    +'<li><span>Blessing Okoro enrolled in <b>Marriage Preparation</b></span><time>Yesterday</time></li>'
+    +'<li><span>Emmanuel Yusuf has not logged in for 2 weeks</span><time>Needs follow-up</time></li>'
+   +'</ul></section></div><p class="muted">All figures are example data.</p>';
+}
+
+function viewAdminCourses(){
+  var rows=courses.map(function(c){
+    return '<tr><td><b>'+esc(c.title)+'</b><br><span class="muted">'+esc(c.cat)+'</span></td><td class="num">'+c.lessons.length+'</td><td class="num">'+c.enrolled+'</td><td class="num">'+c.completed+'</td><td>'+(c.pub?'<span class="pill good">Published</span>':'<span class="pill warn">Draft</span>')+'</td><td><button class="btn ghost small" data-a="pub" data-id="'+c.id+'">'+(c.pub?'Unpublish':'Publish')+'</button></td></tr>';
+  }).join('');
+  return '<section class="stack"><h1>Courses</h1><div class="tablewrap"><table><thead><tr><th>Course</th><th>Lessons</th><th>Enrolled</th><th>Completed</th><th>Status</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></section>'
+   +'<section class="card stack"><h2>Create a course</h2><form id="addForm" class="form">'
+   +'<div class="field"><label for="cTitle">Course title</label><input id="cTitle" required maxlength="80" placeholder="e.g. Foundations of Evangelism"></div>'
+   +'<div class="field"><label for="cCat">Category</label><select id="cCat"><option>Discipleship</option><option>Bible Study</option><option>Workers</option><option>Family</option><option>Leadership</option></select></div>'
+   +'<div class="field wide"><label for="cDesc">Short description</label><textarea id="cDesc" rows="2" maxlength="200" placeholder="What will members learn?"></textarea></div>'
+   +'<div class="field wide"><button class="btn" type="submit" style="align-self:flex-start">Save as draft</button></div></form>'
+   +'<p class="muted">New courses start as drafts with one empty lesson. Publish them to show them to members.</p></section>';
+}
+
+function memberRows(){
+  var q=S.q.toLowerCase();
+  var list=members.filter(function(m){return !q||m.n.toLowerCase().indexOf(q)>=0||m.g.toLowerCase().indexOf(q)>=0});
+  if(!list.length)return '<tr><td colspan="5" class="muted">No members match that search.</td></tr>';
+  return list.map(function(m){
+    return '<tr><td><b>'+esc(m.n)+'</b></td><td>'+esc(m.g)+'</td><td class="num">'+m.c+'</td><td style="min-width:140px"><div class="row" style="flex-wrap:nowrap"><div style="flex:1">'+bar(m.p,m.p===100)+'</div><span class="num muted">'+m.p+'%</span></div></td><td class="muted">'+esc(m.last)+'</td></tr>';
+  }).join('');
+}
+function viewAdminMembers(){
+  return '<section class="stack"><h1>Members</h1><div class="field search"><label for="mSearch">Search by name or group</label><input id="mSearch" type="search" value="'+esc(S.q)+'" placeholder="e.g. Choir"></div>'
+   +'<div class="tablewrap"><table><thead><tr><th>Name</th><th>Group</th><th>Courses</th><th>Progress</th><th>Last active</th></tr></thead><tbody id="mRows">'+memberRows()+'</tbody></table></div><p class="muted">Example members shown.</p></section>';
+}
+
+function render(){
+  var body;
+  if(S.cid)body=viewPlayer();
+  else if(S.tab==='home')body=viewHome();
+  else if(S.tab==='courses')body=viewCourses();
+  else if(S.tab==='admin-overview')body=viewAdminOverview();
+  else if(S.tab==='admin-courses')body=viewAdminCourses();
+  else body=viewAdminMembers();
+  app.innerHTML=header()+body;
+}
+
+function route(){
+  var h=location.hash.slice(1);
+  S.tab=TABS.indexOf(h)>=0?h:'home';
+  S.cid=null;S.quiz=false;S.cert=false;S.result=null;
+  render();window.scrollTo(0,0);
+}
+
+app.addEventListener('click',function(e){
+  var el=e.target.closest('[data-a]');if(!el||el.disabled)return;
+  var a=el.getAttribute('data-a'),id=el.getAttribute('data-id');
+  if(a==='open'){
+    var c=byId(id);if(!prog[id]){prog[id]={done:[],passed:false,score:null};toast('Enrolled in '+c.title)}
+    S.cid=id;S.li=prog[id].done.length<c.lessons.length?firstOpen(c):0;S.quiz=false;S.cert=false;S.result=null;render();window.scrollTo(0,0);
+  }else if(a==='back'){S.cid=null;render();window.scrollTo(0,0)}
+  else if(a==='lesson'){S.li=+el.getAttribute('data-i');S.quiz=false;S.cert=false;render()}
+  else if(a==='quiz'){S.quiz=true;S.cert=false;S.result=null;render()}
+  else if(a==='cert'){S.cert=true;S.quiz=false;render()}
+  else if(a==='complete'){
+    var c2=byId(S.cid),p=prog[S.cid];
+    if(p.done.indexOf(S.li)<0){p.done.push(S.li);toast('Lesson complete')}
+    if(S.li<c2.lessons.length-1)S.li++;
+    else if(p.done.length===c2.lessons.length){S.quiz=true;S.result=null;toast('All lessons done. Quiz unlocked.')}
+    render();window.scrollTo(0,0);
+  }else if(a==='pub'){
+    var cc=byId(id);cc.pub=!cc.pub;toast(cc.pub?'Course published':'Course moved to drafts');render();
+  }
+});
+
+app.addEventListener('submit',function(e){
+  e.preventDefault();
+  if(e.target.id==='quizForm'){
+    var c=byId(S.cid),right=0,miss=false;
+    c.quiz.forEach(function(q,i){
+      var ch=e.target.querySelector('input[name="q'+i+'"]:checked');
+      if(!ch)miss=true;else if(+ch.value===q.a)right++;
+    });
+    if(miss){toast('Answer every question first');return}
+    var score=Math.round(right/c.quiz.length*100),pass=score>=70;
+    S.result={score:score,right:right,pass:pass};
+    var p=prog[S.cid];p.score=score;if(pass&&!p.passed){p.passed=true;c.completed++}
+    render();
+  }else if(e.target.id==='addForm'){
+    var t=document.getElementById('cTitle').value.trim();if(!t)return;
+    courses.push({id:'c'+(courses.length+1)+Date.now()%1000,title:t,cat:document.getElementById('cCat').value,level:'All levels',pub:false,enrolled:0,completed:0,
+      desc:document.getElementById('cDesc').value.trim()||'No description yet.',
+      lessons:[{t:'Lesson 1 (add your content)',type:'video',m:10,b:'Draft content.'}],
+      quiz:[{q:'Sample question',o:['Option A','Option B'],a:0}]});
+    toast('Draft saved');render();
+  }
+});
+
+app.addEventListener('input',function(e){
+  if(e.target.id==='mSearch'){S.q=e.target.value;document.getElementById('mRows').innerHTML=memberRows()}
+  else if(e.target.id==='certName'){S.name=e.target.value.trim()||MEMBER;document.getElementById('certWho').textContent=S.name}
+});
+
+window.addEventListener('hashchange',route);
+route();
+})();
+</script>
